@@ -1,0 +1,10 @@
+.env
+krasotatut.drawio
+krasotatut.drawio.html
+krasotatut.png
+'Наброски кода'
+*.log
+*.xlsx
+*.xls
+/__pycache__
+
