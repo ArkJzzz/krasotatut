@@ -153,7 +153,7 @@ def start(update, context):
             reply_markup=keyboards.get_show_master_page_keyboard()
         )
         # return 'SHOW_MASTER_PAGE'
-        return 'SELECT_IS_ONLINE'
+        return 'PHONE_WAITING'
     else:
         # Запуск диалога регистрации мастера
         sqlite_helpers.set_masters_telegram_id(user.id)
@@ -245,15 +245,18 @@ def save_phone(update, context):
             send_message(update, context, messages.step_four_text)
     else:
         try:
-            phone_number = phonenumbers.parse(update.message.text, 'IT')
-            if phonenumbers.is_valid_number(phone_number):
-                logger.debug(f'+{phone_number.country_code}{phone_number.national_number} phone valid')
+            phone_number = phonenumbers.parse(update.message.text)
+            if phonenumbers.is_possible_number(phone_number):
+                logger.debug(f'+{phone_number.country_code}{phone_number.national_number} phone possible')
                 phone_number = f'+{phone_number.country_code}{phone_number.national_number}'
                 context.user_data['phone_number'] = phone_number
                 send_confirmation_message(update, context)
             else:
+                logger.debug('wrong phone')
                 send_message(update, context, messages.invalid_phone_text)
-        except:
+        except phonenumbers.NumberParseException as e:
+            logger.error(e)
+            logger.debug('wrong phone')
             send_message(update, context, messages.invalid_phone_text)
         
     return 'PHONE_WAITING'
