@@ -7,7 +7,6 @@ import textwrap
 import phonenumbers
 
 from dotenv import load_dotenv
-from validate_email import validate_email
 from telegram import ParseMode
 from telegram.ext import Filters
 from telegram.ext import Updater
@@ -153,7 +152,8 @@ def start(update, context):
             text='Мастер уже есть в базе данных',
             reply_markup=keyboards.get_show_master_page_keyboard()
         )
-        return 'SHOW_MASTER_PAGE'
+        # return 'SHOW_MASTER_PAGE'
+        return 'SELECT_IS_ONLINE'
     else:
         # Запуск диалога регистрации мастера
         sqlite_helpers.set_masters_telegram_id(user.id)

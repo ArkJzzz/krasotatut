@@ -16,6 +16,11 @@ logger = logging.getLogger('keyboards')
 
 
 
+def split_items_to_pages(items, items_per_page):
+    pages = [items[i:i+items_per_page] for i in range(0, len(items), items_per_page)]
+    return pages
+
+
 def get_ok_keyboard():
     ok_keyboard = [
         [
@@ -73,16 +78,7 @@ def get_edit_master_info_keyboard():
 
 
 def get_categories_keyboard(categories, current_page=1, items_per_page=7):
-    pages = []
-    page = []
-    for category in categories:
-        if len(page) == items_per_page:
-            pages.append(page)
-            page = []
-        else:
-            page.append(category)
-    pages.append(page)
-
+    pages = split_items_to_pages(categories, items_per_page)
     paginator = InlineKeyboardPaginator(
         len(pages),
         current_page=current_page,
@@ -111,15 +107,7 @@ def get_categories_keyboard(categories, current_page=1, items_per_page=7):
 
 def get_specializations_keyboard(specializations, selected_specializations, 
                                             current_page=1, items_per_page=7):
-    pages = []
-    page = []
-    for specialization in specializations:
-        if len(page) == items_per_page:
-            pages.append(page)
-            page = []
-        else:
-            page.append(specialization)
-    pages.append(page)
+    pages = split_items_to_pages(specializations, items_per_page)
     paginator = InlineKeyboardPaginator(
         len(pages),
         current_page=current_page,
@@ -146,16 +134,7 @@ def get_specializations_keyboard(specializations, selected_specializations,
 
 
 def get_regions_keyboard(regions, current_page=1, items_per_page=7):
-    pages = []
-    page = []
-    for region in regions:
-        if len(page) == items_per_page:
-            pages.append(page)
-            page = []
-        else:
-            page.append(region)
-    pages.append(page)
-
+    pages = split_items_to_pages(regions, items_per_page)
     paginator = InlineKeyboardPaginator(
         len(pages),
         current_page=current_page,
@@ -181,17 +160,7 @@ def get_regions_keyboard(regions, current_page=1, items_per_page=7):
 
 
 def get_provinces_keyboard(provinces, selected_provinces, current_page=1, items_per_page=7):
-    pages = []
-    page = []
-    logger.debug(provinces)
-    for province in provinces:
-        if len(page) == items_per_page:
-            pages.append(page)
-            page = []
-        else:
-            page.append(province)
-    pages.append(page)
-
+    pages = split_items_to_pages(provinces, items_per_page)
     paginator = InlineKeyboardPaginator(
         len(pages),
         current_page=current_page,
@@ -319,16 +288,7 @@ def get_master_page_keyboard():
 
 
 def get_masters_keyboard(masters, current_page=1, items_per_page=7):
-    pages = []
-    page = []
-    for master in masters:
-        if len(page) == items_per_page:
-            pages.append(page)
-            page = []
-        else:
-            page.append(master)
-    pages.append(page)
-
+    pages = split_items_to_pages(masters, items_per_page)
     paginator = InlineKeyboardPaginator(
         len(pages),
         current_page=current_page,

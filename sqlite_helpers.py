@@ -2,12 +2,9 @@ __author__ = 'ArkJzzz (arkjzzz@gmail.com)'
 
 import logging
 import sqlite3
-import pandas
 import os
 from dotenv import load_dotenv
-# from regions_cities import regions_cities
 
-#'База данных мастеров.xlsx'
 
 logger = logging.getLogger('sqlite_heplers')
 
