@@ -5,15 +5,22 @@ import logging
 import sqlite3
 import textwrap
 import phonenumbers
+import traceback
+import html
+import json
 
 from dotenv import load_dotenv
 from telegram import ParseMode
+from telegram import Update
 from telegram.ext import Filters
 from telegram.ext import Updater
-from telegram.ext import CommandHandler
+from telegram.ext import CallbackContext
 from telegram.ext import CallbackQueryHandler
+from telegram.ext import CommandHandler
 from telegram.ext import MessageHandler
 from telegram.ext import PreCheckoutQueryHandler
+
+
 
 import keyboards
 import messages
@@ -73,21 +80,30 @@ def handle_users_reply(update, context):
     sqlite_helpers.set_user_state(chat_id, next_state)
 
 
-def error_handler(update, context):
+def error_handler(update: object, context: CallbackContext):
     message = f'''\
             Exception while handling an update:
             {context.error}
         '''
     logger.error(message, exc_info=context.error)
+    tb_list = traceback.format_exception(None, context.error, context.error.__traceback__)
+    tb_string = ''.join(tb_list)
 
-    context.bot.send_message(
-        chat_id=os.getenv('TELEGRAM_ADMIN_CHAT_ID'), 
-        text=message,
+    update_str = update.to_dict() if isinstance(update, Update) else str(update)
+    message = (
+        f'An exception was raised while handling an update\n'
+        f'<pre>update = {html.escape(json.dumps(update_str, indent=2, ensure_ascii=False))}'
+        '</pre>\n\n'
+        f'<pre>context.chat_data = {html.escape(str(context.chat_data))}</pre>\n\n'
+        f'<pre>context.user_data = {html.escape(str(context.user_data))}</pre>\n\n'
+        f'<pre>{html.escape(tb_string)}</pre>'
     )
 
-
-def error(update, error):
-    logger.warning('Update "%s" caused error "%s"', update, error)
+    context.bot.send_message(
+        chat_id=os.getenv('ADMIN_CHAT_ID'), 
+        text=message,
+        parse_mode=ParseMode.HTML,
+    )
 
 
 def send_confirmation_message(update, context):
@@ -97,7 +113,7 @@ def send_confirmation_message(update, context):
     )
     context.bot.delete_message(
         chat_id=update.message.chat_id,
-        message_id=update.message.message_id - 1,
+        message_id=update.message.message_id - 1, # telegram.error.BadRequest: Message to delete not found
     )
 
 
@@ -107,14 +123,16 @@ def send_message(update, context, text, keyboard=None):
     else:
         message = update.message
 
-    message.reply_text(
+    sended_message = message.reply_text(
         text=textwrap.dedent(text),
         reply_markup=keyboard,
     )
     context.bot.delete_message(
         chat_id=message.chat_id,
-        message_id=message.message_id,
+        message_id=message.message_id,  # telegram.error.BadRequest: Message can't be deleted for everyone
     )
+
+    logger.debug(sended_message.message_id)
 
 
 def start(update, context):
@@ -551,18 +569,15 @@ def show_master_page(update, context):
     master_specializations = sqlite_helpers.get_master_specializations_names(
                                             context.user_data['telegram_id'])
     master_provinces = sqlite_helpers.get_master_provinces_names(
-                                            context.user_data['telegram_id'])
+                                            context.user_data['telegram_id'])  
     message_text = messages.get_master_page_text(
         master, 
-        master_specializations, 
-        master_provinces
+        master_specializations,
+        master_provinces,
     )
     keyboard = keyboards.get_master_page_keyboard()
     send_message(update, context, message_text, keyboard)
 
-    pprint(master)
-    pprint(master_specializations)
-    pprint(master_provinces)
     return 'SHOW_MASTER_PAGE'
 
 
@@ -607,6 +622,7 @@ def main():
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
+    dispatcher.add_error_handler(error_handler)
 
     updater.start_polling()
     updater.idle()

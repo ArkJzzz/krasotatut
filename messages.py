@@ -123,8 +123,8 @@ def get_master_page_text(master, specializations, provinces):
     is_online = 'Да' if is_online else 'Нет'
     is_find_job = 'Да' if is_find_job else 'Нет'
 
-    specializations_names = ', '.join(specializations)
-    provinces_names = ', '.join(provinces)
+    specializations_names = ', '.join(specializations) if  specializations else 'Не указано'
+    provinces_names = ', '.join(provinces) if  provinces else 'Не указано'
 
     master_page_text = f'''
 Информация, которая будет отображаться в для клиентов:
