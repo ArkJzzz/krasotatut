@@ -45,6 +45,25 @@ def get_user_state(telegram_id):
         return user_state[0]
 
 
+def set_master_state(telegram_id, state):
+    query = 'UPDATE masters SET state = ? WHERE telegram_id = ?'
+    db = get_database_connection()
+    cursor = db.cursor()
+    cursor.execute(query, (state, int(telegram_id)))
+    db.commit()
+
+
+def get_master_state(telegram_id):
+    query = 'SELECT state FROM masters WHERE telegram_id = ?'
+    db = get_database_connection()
+    cursor = db.cursor()
+    user_state = cursor.execute(query, (int(telegram_id), )).fetchone()
+    db.commit()
+
+    if user_state:
+        return user_state[0]
+
+
 def get_master(telegram_id):
     query = '''
         SELECT fullname, social, cities, is_house_call, is_online, other_info,

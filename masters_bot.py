@@ -47,12 +47,12 @@ def handle_users_reply(update, context):
     context.user_data['telegram_id'] = chat_id
 
     if user_reply == '/start':
-        user_state = 'START'
+        master_state = 'START'
     else:
-        user_state = sqlite_helpers.get_user_state(chat_id)
+        master_state = sqlite_helpers.get_master_state(chat_id)
 
     logger.debug(f'user_reply: {user_reply}')
-    logger.debug(f'user_state: {user_state}')
+    logger.debug(f'master_state: {master_state}')
     
     states_functions = {
         'START': start,
@@ -74,10 +74,10 @@ def handle_users_reply(update, context):
         'SHOW_MASTER_PAGE': show_master_page,
     }
 
-    state_handler = states_functions[user_state]
+    state_handler = states_functions[master_state]
     next_state = state_handler(update, context)
     logger.debug('next_state: {}'.format(next_state))
-    sqlite_helpers.set_user_state(chat_id, next_state)
+    sqlite_helpers.set_master_state(chat_id, next_state)
 
 
 def error_handler(update: object, context: CallbackContext):
@@ -173,7 +173,6 @@ def start(update, context):
         # return 'SHOW_MASTER_PAGE'
         return 'PHONE_WAITING'
     else:
-        # Запуск диалога регистрации мастера
         sqlite_helpers.set_masters_telegram_id(user.id)
         welcome_message = f'''\
                 Здравствуйте, {user.first_name}.
