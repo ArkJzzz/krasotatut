@@ -107,14 +107,17 @@ def error_handler(update: object, context: CallbackContext):
 
 
 def send_confirmation_message(update, context):
-    update.message.reply_text(
+    sent_message = update.message.reply_text(
         text=textwrap.dedent(f'Вы ввели \n{update.message.text}'),
         reply_markup=keyboards.get_confirm_keyboard(),
     )
-    context.bot.delete_message(
-        chat_id=update.message.chat_id,
-        message_id=update.message.message_id - 1, # telegram.error.BadRequest: Message to delete not found
-    )
+    if context.user_data.get('message_to_del_id'):
+        context.bot.delete_message(
+            chat_id=update.message.chat_id,
+            message_id=context.user_data['message_to_del_id']
+        )
+    context.user_data['message_to_del_id'] = sent_message.message_id
+    logger.debug(context.user_data)
 
 
 def send_message(update, context, text, keyboard=None):
@@ -122,17 +125,17 @@ def send_message(update, context, text, keyboard=None):
         message = update.callback_query.message
     else:
         message = update.message
-
-    sended_message = message.reply_text(
+    sent_message = message.reply_text(
         text=textwrap.dedent(text),
         reply_markup=keyboard,
     )
-    context.bot.delete_message(
-        chat_id=message.chat_id,
-        message_id=message.message_id,  # telegram.error.BadRequest: Message can't be deleted for everyone
-    )
-
-    logger.debug(sended_message.message_id)
+    if context.user_data.get('message_to_del_id'):
+        context.bot.delete_message(
+            chat_id=message.chat_id,
+            message_id=context.user_data['message_to_del_id']
+        )
+    context.user_data['message_to_del_id'] = sent_message.message_id
+    logger.debug(context.user_data)
 
 
 def start(update, context):

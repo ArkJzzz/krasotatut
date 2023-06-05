@@ -6,7 +6,7 @@ import os
 from dotenv import load_dotenv
 
 
-logger = logging.getLogger('sqlite_heplers')
+logger = logging.getLogger('sqlite_helpers')
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -84,8 +84,7 @@ def get_master_specializations_names(telegram_id):
     query = '''
         SELECT specializations.name
         FROM specializations
-        JOIN masters_specializations 
-        ON specializations.id = masters_specializations.specialization_id 
+        JOIN masters_specializations ON masters_specializations.specialization_id = specializations.id
         WHERE masters_specializations.master_id = ?;
     '''
     db = get_database_connection()
@@ -103,8 +102,7 @@ def get_master_provinces_names(telegram_id):
     query = '''
         SELECT provinces.name
         FROM provinces
-        JOIN masters_provinces 
-        ON provinces.id = masters_provinces.province_id 
+        JOIN masters_provinces ON masters_provinces.province_id = provinces.id
         WHERE masters_provinces.master_id = ?;
     '''
     db = get_database_connection()
@@ -428,57 +426,108 @@ def get_is_online_id():
         return is_online_id[0]
     
 
+def set_user_region(user_id, region_id):
+    logger.debug(f'user_id: {user_id}')
+    logger.debug(f'region_id: {region_id}')
+    query = 'REPLACE INTO users_regions VALUES (?, ?)'
+    db = get_database_connection()
+    cursor = db.cursor()
+    cursor.execute(query, (user_id, region_id))
+    db.commit()
 
 
-# def get_city_masters(city_id):
+def set_user_province(user_id, province_id):
+    logger.debug(f'user_id: {user_id}')
+    logger.debug(f'province_id: {province_id}')
+    query = 'REPLACE INTO users_provinces VALUES (?, ?)'
+    db = get_database_connection()
+    cursor = db.cursor()
+    cursor.execute(query, (user_id, province_id))
+    db.commit()
+
+
+def set_user_specialization(user_id, specialization_id):
+    query = 'REPLACE INTO users_specializations VALUES (?, ?)'
+    db = get_database_connection()
+    cursor = db.cursor()
+    cursor.execute(query, (user_id, specialization_id))
+    db.commit()
+
+
+def get_province_specialization_masters(province_id, specialization_id):
+    query = '''
+        SELECT masters.telegram_id, masters.fullname
+        FROM masters
+        JOIN masters_specializations ON masters_specializations.master_id = masters.telegram_id
+        JOIN specializations ON specializations.id = masters_specializations.specialization_id
+        JOIN masters_provinces ON masters_provinces.master_id = masters.telegram_id
+        JOIN provinces ON provinces.id = masters_provinces.province_id
+        WHERE provinces.id = ? AND specializations.id = ?;
+    '''
+    db = get_database_connection()
+    cursor = db.cursor()
+    cursor.execute(query, (province_id, specialization_id))
+    return list(set(cursor.fetchall()))
+
+
+def get_province_categories(province_id):
+    query = '''
+        SELECT specializations_categories.id, specializations_categories.name
+        FROM masters_provinces 
+        JOIN masters ON masters.telegram_id = masters_provinces.master_id
+        JOIN provinces ON provinces.id = masters_provinces.province_id
+        JOIN masters_specializations ON masters_specializations.master_id = masters.telegram_id
+        JOIN specializations ON specializations.id = masters_specializations.id
+        JOIN specializations_categories ON specializations_categories.id = specializations.specializations_categories_id
+        WHERE provinces.id = ?
+    '''
+    db = get_database_connection()
+    cursor = db.cursor()
+    cursor.execute(query, (province_id, ))
+    db.commit()
+    
+    return cursor.fetchall()
+
+
+def set_selected_master(user_id, master_id):
+    query = 'REPLACE INTO users_masters VALUES (?, ?)'
+    db = get_database_connection()
+    cursor = db.cursor()
+    cursor.execute(query, (user_id, master_id))
+    db.commit()
+
+
+
+
+
+# def get_city_masters(province_id):
 #     query = '''
-#         SELECT masters_info.master_id, masters_info.fullname, masters_info.social_profile, masters_info.tg_username
-#         FROM masters_info
-#         JOIN masters_cities ON masters_cities.master_id = masters_info.master_id
-#         JOIN cities ON cities.city_id = masters_cities.city_id
-#         WHERE cities.city_id = ?;
+#         SELECT masters.telegram_id, masters.fullname, masters.social_profile, masters.tg_username
+#         FROM masters
+#         JOIN masters_provinces ON masters_provinces.master_id = masters.telegram_id
+#         JOIN cities ON cities.province_id = masters_provinces.province_id
+#         WHERE cities.province_id = ?;
 #     '''
 #     db = get_database_connection()
 #     cursor = db.cursor()
-#     cursor.execute(query, (city_id, ))
+#     cursor.execute(query, (province_id, ))
 #     return list(set(cursor.fetchall()))
 
 
-# def get_city_specialization_masters(city_id, specialization_id):
+# def get_city_specialization_masters(province_id, specialization_id):
 #     query = '''
-#         SELECT masters_info.master_id, masters_info.fullname
-#         FROM masters_info
-#         JOIN masters_specializations ON masters_specializations.master_id = masters_info.master_id
-#         JOIN specializations ON specializations.specialization_id = masters_specializations.specialization_id
-#         JOIN masters_cities ON masters_cities.master_id = masters_info.master_id
-#         JOIN cities ON cities.city_id = masters_cities.city_id
-#         WHERE cities.city_id = ? AND specializations.specialization_id = ?;
+#         SELECT masters.telegram_id, masters.fullname
+#         FROM masters
+#         JOIN masters_specializations ON masters_specializations.master_id = masters.telegram_id
+#         JOIN specializations ON specializations.id = masters_specializations.id
+#         JOIN masters_provinces ON masters_provinces.master_id = masters.telegram_id
+#         JOIN cities ON cities.province_id = masters_provinces.province_id
+#         WHERE cities.province_id = ? AND specializations.id = ?;
 #     '''
 #     db = get_database_connection()
 #     cursor = db.cursor()
-#     cursor.execute(query, (city_id, specialization_id))
+#     cursor.execute(query, (province_id, specialization_id))
 #     return list(set(cursor.fetchall()))   
-
-
-# def set_selected_master(user_id, selected_master_id):
-#     db = get_database_connection()
-#     cursor = db.cursor()
-#     query = 'UPDATE users SET selected_master_id = ? WHERE user_id = ?'
-#     cursor.execute(query, (int(selected_master_id), int(user_id)))
-#     query = 'INSERT OR IGNORE INTO users_masters(user_id, master_id) VALUES(?, ?)'
-#     cursor.execute(query, (int(user_id), int(selected_master_id)))
-#     db.commit()
-
-
-# def get_selected_master(user_id):
-#     query = 'SELECT selected_master_id FROM users WHERE user_id = ?'
-#     user_id = int(user_id)
-#     db = get_database_connection()
-#     cursor = db.cursor()
-#     selected_master_id = cursor.execute(query, (user_id, )).fetchone()
-#     db.commit()
-#     if selected_master_id:
-#         return selected_master_id[0]
 
 
 # def get_splitted_items(record): # -> list

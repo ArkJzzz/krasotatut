@@ -154,5 +154,42 @@ e_mail: {e_mail}
     return master_page_text
 
 
+
+def get_master_page_text(master, specializations, provinces):
+    (fullname,
+    social,
+    cities,
+    is_house_call,
+    is_online,
+    other_info,
+    telegram_username,
+    phone_number,
+    e_mail,
+    is_find_job,
+    subscription_exp) = master
+
+    fullname = 'Не указано' if not fullname else fullname
+    social = 'Не указано' if not social else social
+    cities = 'Не указано' if not cities else cities
+    is_house_call = 'Да' if is_house_call else 'Нет'
+    is_online = 'Да' if is_online else 'Нет'
+    is_find_job = 'Да' if is_find_job else 'Нет'
+    other_info = 'Не указано' if not other_info else other_info
+    specializations_names = ', '.join(specializations) if specializations else 'Не указано'
+    provinces_names = ', '.join(provinces) if provinces else 'Не указано'
+
+    master_page_text = (
+        f'<i>Имя:</i> <b>{fullname}</b>\n'
+        f'<i>Социальные сети:</i> \n{social}\n'
+        f'<i>Специализации:</i> {specializations_names}\n'
+        f'<i>Провинции:</i> {provinces_names}\n'
+        f'<i>Города:</i> {cities}\n'
+        f'<i>Выезд на дом:</i> {is_house_call}\n'
+        f'<i>Предоставление услуг онлайн:</i> {is_online}\n'
+        f'<i>Дополнительная информация:</i> {other_info}'
+    )
+    return master_page_text
+
+
 if __name__ == '__main__':
     logger.error('Этот скрипт не предназначен для запуска напрямую')
